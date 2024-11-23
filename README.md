@@ -35,6 +35,6 @@ Bash script that allows you to migrate a complete Git repository (including hist
 2. Run the script with parameters:
 
   ```bash
-   ./migrate-repo.sh <source_repository_url> <destination_repository_url>
+   ./migrate-repo.sh <source_repository_url> <destination_repository_url> --checkout
    ```
    

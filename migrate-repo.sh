@@ -3,12 +3,17 @@
 
 # Checks if the necessary parameters were passed
 if [ "$#" -ne 2 ]; then
-  echo "Use: $0 <source_repository_url> <destination_repository_url>"
+  echo "Use: $0 <source_repository_url> <destination_repository_url> [--checkout]"
   exit 1
 fi
 
 SOURCE=$1
 DESTINATION=$2
+CHECKOUT=false
+
+if [ "$3" == "--checkout" ]; then
+  CHECKOUT=true
+fi
 
 echo "=== Cloning the source repository: $SOURCE ==="
 git clone --mirror "$SOURCE"
@@ -34,3 +39,14 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "=== Migration completed successfully! ==="
+
+if [ "$CHECKOUT" = true ]; then
+  echo "=== Cloning destination repository with working tree ==="
+  cd .. || exit 1
+  git clone "$DESTINATION"
+  if [ $? -ne 0 ]; then
+    echo "Error cloning working copy from destination."
+    exit 1
+  fi
+  echo "=== Working copy of destination repository is ready! ==="
+fi
