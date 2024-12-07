@@ -1,18 +1,35 @@
 #!/bin/bash
 # Script to migrate Git repository with full history
 
-# Checks if the necessary parameters were passed
-if [ "$#" -ne 2 ]; then
-  echo "Use: $0 <source_repository_url> <destination_repository_url> [--checkout]"
-  exit 1
-fi
+# Function to read user input if not passed as parameter
+read_if_empty() {
+  local var_name=$1
+  local prompt=$2
+  local default_value=$3
+  local value=${!var_name}
 
-SOURCE=$1
-DESTINATION=$2
-CHECKOUT=false
+  if [ -z "$value" ]; then
+    read -p "$prompt " value
+    # Usa valor padrão se fornecido
+    if [ -z "$value" ] && [ -n "$default_value" ]; then
+      value=$default_value
+    fi
+    eval $var_name="'$value'"
+  fi
+}
 
-if [ "$3" == "--checkout" ]; then
+ORIGEM=$1
+DESTINO=$2
+CHECKOUT=$3
+
+read_if_empty ORIGEM "Enter the source repository URL:"
+read_if_empty DESTINO "Enter the destination repository URL:"
+read_if_empty CHECKOUT "Do you want to clone the destination repository as working copy? (y/n)" "n"
+
+if [[ "$CHECKOUT" =~ ^[Yy]$ ]]; then
   CHECKOUT=true
+else
+  CHECKOUT=false
 fi
 
 echo "=== Cloning the source repository: $SOURCE ==="
