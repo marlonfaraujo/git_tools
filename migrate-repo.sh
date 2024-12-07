@@ -2,29 +2,37 @@
 # Script to migrate Git repository with full history
 
 # Function to read user input if not passed as parameter
-read_if_empty() {
+read_required() {
   local var_name=$1
   local prompt=$2
-  local default_value=$3
-  local value=${!var_name}
-
-  if [ -z "$value" ]; then
+  local value=""
+  
+  while [ -z "$value" ]; do
     read -p "$prompt " value
-    # Usa valor padrão se fornecido
-    if [ -z "$value" ] && [ -n "$default_value" ]; then
-      value=$default_value
+    if [ -z "$value" ]; then
+      echo "Value cannot be empty. Please try again."
     fi
-    eval $var_name="'$value'"
-  fi
+  done
+  
+  eval $var_name="'$value'"
 }
 
-ORIGEM=$1
-DESTINO=$2
-CHECKOUT=$3
+SOURCE="$1"
+DESTINATION="$2"
+CHECKOUT="$3"
 
-read_if_empty ORIGEM "Enter the source repository URL:"
-read_if_empty DESTINO "Enter the destination repository URL:"
-read_if_empty CHECKOUT "Do you want to clone the destination repository as working copy? (y/n)" "n"
+if [ -z "$SOURCE" ]; then
+  read_required SOURCE "Enter the source repository URL:"
+fi
+
+if [ -z "$DESTINATION" ]; then
+  read_required DESTINATION "Enter the destination repository URL:"
+fi
+
+if [ -z "$CHECKOUT" ]; then
+  read -p "Do you want to clone the destination repository as working copy? (y/n) [n]: " CHECKOUT
+  CHECKOUT=${CHECKOUT:-n}  # padrão 'n' se vazio
+fi
 
 if [[ "$CHECKOUT" =~ ^[Yy]$ ]]; then
   CHECKOUT=true
