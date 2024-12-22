@@ -7,8 +7,11 @@ BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 # Starting date for the first commit (can be adjusted)
 START_DATE=$(date -d "2025-09-01 09:00:00" +"%Y-%m-%dT%H:%M:%S")
 
-# Time increment in seconds between commits (e.g., 1 hour = 3600 seconds)
-INCREMENT=3600
+# Time increment in hours between commits (e.g., 2 hours)
+HOURS_INCREMENT=2
+
+# Convert hours to seconds
+INCREMENT=$((HOURS_INCREMENT * 3600))
 
 # Counter to increment each commit
 COUNTER=0
