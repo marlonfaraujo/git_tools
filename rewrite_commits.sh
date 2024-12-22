@@ -4,22 +4,38 @@ set -e
 # Current branch name
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
-# Example of changing the date: sets all commits to now
-# (can be adjusted for specific dates)
-NEW_DATE=$(date +"%Y-%m-%dT%H:%M:%S")
+# Starting date for the first commit (can be adjusted)
+START_DATE=$(date -d "2025-09-01 09:00:00" +"%Y-%m-%dT%H:%M:%S")
+
+# Time increment in seconds between commits (e.g., 1 hour = 3600 seconds)
+INCREMENT=3600
+
+# Counter to increment each commit
+COUNTER=0
 
 git filter-repo --commit-callback '
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 branch = os.environ.get("BRANCH_NAME")
-new_date = os.environ.get("NEW_DATE")
+start_date = os.environ.get("START_DATE")
+increment = int(os.environ.get("INCREMENT"))
+counter = int(os.environ.get("COUNTER"))
 
-# Update dates (author and committer)
-commit.author_date = new_date
-commit.committer_date = new_date
+# Calculate new date for this commit
+base_dt = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S")
+new_dt = base_dt + timedelta(seconds=counter * increment)
+commit_date_str = new_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-# Append branch name at the end of the commit message
-if f"[{branch}]" not in commit.message.decode("utf-8"):
-    commit.message = (commit.message.decode("utf-8").strip() + f" [{branch}]").encode("utf-8")
+# Update commit dates
+commit.author_date = commit_date_str
+commit.committer_date = commit_date_str
+
+# Prepend branch name to commit message if not already there
+msg = commit.message.decode("utf-8").strip()
+if not msg.startswith(f"[{branch}]"):
+    commit.message = f"[{branch}] {msg}".encode("utf-8")
+
+# Increment counter for next commit
+os.environ["COUNTER"] = str(counter + 1)
 ' --force
