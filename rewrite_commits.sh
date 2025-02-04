@@ -43,7 +43,7 @@ commit_count = int(os.environ.get("COMMIT_COUNT"))
 start_hour = int(os.environ.get("START_HOUR"))
 start_minute = int(os.environ.get("START_MINUTE"))
 
-# Random offset in minutes for this commit (0-59)
+# Random offset in minutes and seconds
 random_minutes = random.randint(0, 59)
 random_seconds = random.randint(0, 59)
 
@@ -58,11 +58,18 @@ commit_date_str = base_dt.strftime("%Y-%m-%dT%H:%M:%S")
 commit.author_date = commit_date_str
 commit.committer_date = commit_date_str
 
-# Prepend branch type and name to commit message if not already there
+# Prepend branch type/name only if not main/master/develop/merge
 msg = commit.message.decode("utf-8").strip()
-prefix = f"[{branch_type}/{branch}]"
-if not msg.startswith(prefix):
-    commit.message = f"{prefix} {msg}".encode("utf-8")
+
+is_merge = msg.startswith("Merge ")
+skip_prefix = branch_type in ["main", "develop"] or is_merge
+
+if not skip_prefix:
+    prefix = f"[{branch_type}/{branch}]"
+    if not msg.startswith(prefix):
+        msg = f"{prefix} {msg}"
+
+commit.message = msg.encode("utf-8")
 
 # Increment commit count for next commit
 os.environ["COMMIT_COUNT"] = str(commit_count + 1)
