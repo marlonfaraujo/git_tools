@@ -1,0 +1,92 @@
+# ===============================
+# OS GENERATED FILES
+# ===============================
+# Linux
+*~
+.nfs*
+.DS_Store
+Thumbs.db
+
+# Windows
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+*.lnk
+
+# ===============================
+# ARCHIVES / COMPRESSED FILES
+# ===============================
+*.7z
+*.zip
+*.rar
+*.tar
+*.gz
+*.bz2
+*.xz
+*.tgz
+*.tar.gz
+
+# ===============================
+# PYTHON
+# ===============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+*.egg-info/
+.eggs/
+*.egg
+.pytest_cache/
+.tox/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtualenv
+.env
+.venv
+env/
+venv/
+ENV/
+Pipfile.lock
+poetry.lock
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ===============================
+# VISUAL STUDIO CODE
+# ===============================
+.vscode/
+.history/
+.code-workspace
+
+# ===============================
+# JETBRAINS (PyCharm, IntelliJ, Rider, etc.)
+# ===============================
+.idea/
+*.iml
+out/
+
+# ===============================
+# LOGS & TEMP FILES
+# ===============================
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.old
+
+# ===============================
+# MISC
+# ===============================
+*.orig
+*.rej
+*.patch
+*.diff

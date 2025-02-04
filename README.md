@@ -32,9 +32,32 @@ Bash script that allows you to migrate a complete Git repository (including hist
    chmod +x migrate-repo.sh
    ```
 
-2. Run the script with parameters:
+2. Running in interactive mode
+
+  ```bash
+   ./migrate-repo.sh 
+   ```
+
+3. Or run the script with parameters:
 
   ```bash
    ./migrate-repo.sh <source_repository_url> <destination_repository_url> --checkout
    ```
+
+## Rewrite commits script
+
+Script that goes through the commits of a Git repository, and changes the date of each commit and adds the branch name to the message
+
+1. Installation python
+
+2. Install git-filter-repo
    
+  ```bash
+   sudo apt install git-filter-repo
+   ```
+
+3. Run the script
+
+  ```bash
+    ./rewrite-commits.sh
+   ```
