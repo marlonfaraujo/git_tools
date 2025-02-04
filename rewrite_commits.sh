@@ -4,8 +4,9 @@ set -e
 # Current branch name
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
-# Starting day for commits (can be adjusted)
-START_DAY="2025-09-01"
+# Time interval
+START_DATE="2025-08-23 08:21:00"
+END_DATE="2025-08-25 23:59:00"
 
 # Determine branch type for Git Flow
 if [[ "$BRANCH_NAME" == develop ]]; then
@@ -24,41 +25,31 @@ fi
 
 git filter-repo --commit-callback '
 import os
-import random
 from datetime import datetime, timedelta
 
 branch = os.environ.get("BRANCH_NAME")
 branch_type = os.environ.get("BRANCH_TYPE")
-start_day = os.environ.get("START_DAY")
+start_date = datetime.strptime(os.environ.get("START_DATE"), "%Y-%m-%d %H:%M:%S")
+end_date = datetime.strptime(os.environ.get("END_DATE"), "%Y-%m-%d %H:%M:%S")
 
-# Randomize starting hour and minute for the first commit
-if "COMMIT_COUNT" not in os.environ:
-    os.environ["COMMIT_COUNT"] = "0"
-    start_hour = random.randint(9, 17)          # Working hours: 09-17
-    start_minute = random.randint(0, 59)
-    os.environ["START_HOUR"] = str(start_hour)
-    os.environ["START_MINUTE"] = str(start_minute)
+# On first commit, calculate interval per commit
+if "TOTAL_COMMITS" not in os.environ:
+    os.environ["TOTAL_COMMITS"] = str(commit.repo.get_number_of_commits())
+    os.environ["COMMIT_INDEX"] = "0"
 
-commit_count = int(os.environ.get("COMMIT_COUNT"))
-start_hour = int(os.environ.get("START_HOUR"))
-start_minute = int(os.environ.get("START_MINUTE"))
+total_commits = int(os.environ.get("TOTAL_COMMITS"))
+commit_index = int(os.environ.get("COMMIT_INDEX"))
 
-# Random offset in minutes and seconds
-random_minutes = random.randint(0, 59)
-random_seconds = random.randint(0, 59)
-
-# Calculate commit datetime
-base_dt = datetime.strptime(start_day, "%Y-%m-%d") \
-          + timedelta(hours=start_hour, minutes=start_minute) \
-          + timedelta(minutes=random_minutes, seconds=random_seconds)
-
-commit_date_str = base_dt.strftime("%Y-%m-%dT%H:%M:%S")
+# Linear distribution of commits across interval
+delta = (end_date - start_date) / max(total_commits - 1, 1)
+commit_dt = start_date + commit_index * delta
+commit_date_str = commit_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 # Update commit dates
 commit.author_date = commit_date_str
 commit.committer_date = commit_date_str
 
-# Prepend branch type/name only if not main/master/develop/merge
+# Commit message adjustments
 msg = commit.message.decode("utf-8").strip()
 
 is_merge = msg.startswith("Merge ")
@@ -71,6 +62,6 @@ if not skip_prefix:
 
 commit.message = msg.encode("utf-8")
 
-# Increment commit count for next commit
-os.environ["COMMIT_COUNT"] = str(commit_count + 1)
+# Increment commit index
+os.environ["COMMIT_INDEX"] = str(commit_index + 1)
 ' --force
