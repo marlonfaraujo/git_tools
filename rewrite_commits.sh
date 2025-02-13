@@ -4,30 +4,75 @@ set -e
 # File with commit customization
 CONFIG_FILE="commit_references.json"
 
+# Increment to use when JSON date is empty
+INCREMENT_HOURS=1
+INCREMENT_MINUTES=22
+
+# Keep track of the last used date
+LAST_USED_DATE=""
+
 git filter-repo --commit-callback "
 import os, json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 config_file = os.environ.get('CONFIG_FILE', 'commit_references.json')
+increment_hours = int(os.environ.get('INCREMENT_HOURS', 1))
+increment_minutes = int(os.environ.get('INCREMENT_MINUTES', 22))
 
 # Load commit references JSON
 with open(config_file, 'r', encoding='utf-8') as f:
     commit_rules = json.load(f)
 
+# Initialize global variable for last used datetime
+if 'last_used_date' not in globals():
+    globals()['last_used_date'] = None
+
+# Get current commit index (as string)
 commit_idx = str(commit.original_id.decode('utf-8'))
 
-# Get rules if exist
+# Fetch rule from JSON
 rule = commit_rules.get(commit_idx, {})
 
-# Handle commit date (if present in JSON)
+# Determine commit date
+new_datetime = None
 if 'date' in rule and rule['date']:
     try:
-        new_date = datetime.strptime(rule['date'], '%Y-%m-%d %H:%M:%S')
-        commit_date_str = new_date.strftime('%Y-%m-%dT%H:%M:%S')
-        commit.author_date = commit_date_str
-        commit.committer_date = commit_date_str
+        new_datetime = datetime.strptime(rule['date'], '%Y-%m-%d %H:%M:%S')
     except Exception as e:
         pass  # ignore invalid date
+
+if not new_datetime:
+    # If last used date exists, add increment
+    if globals()['last_used_date']:
+        new_datetime = globals()['last_used_date'] + timedelta(hours=increment_hours, minutes=increment_minutes)
+    else:
+        # Look for previous commits with filled dates
+        previous_indices = sorted([int(k) for k in commit_rules.keys() if int(k) < int(commit_idx)], reverse=True)
+        for idx in previous_indices:
+            prev_rule = commit_rules.get(str(idx), {})
+            if 'date' in prev_rule and prev_rule['date']:
+                try:
+                    new_datetime = datetime.strptime(prev_rule['date'], '%Y-%m-%d %H:%M:%S') + timedelta(hours=increment_hours, minutes=increment_minutes)
+                    break
+                except:
+                    continue
+    # If still None, keep original commit date
+    if not new_datetime:
+        new_datetime = commit.author_date.decode('utf-8')  # fallback to original
+        try:
+            new_datetime = datetime.strptime(new_datetime, '%s')
+        except:
+            new_datetime = None  # leave unchanged if parsing fails
+
+# Update last used date
+globals()['last_used_date'] = new_datetime
+
+# Apply new date if valid
+if isinstance(new_datetime, datetime):
+    commit_date_str = new_datetime.strftime('%Y-%m-%dT%H:%M:%S')
+    timezone_offset = '-0300'
+    commit.author_date = f'{commit_date_str} {timezone_offset}'.encode('utf-8')
+    commit.committer_date = f'{commit_date_str} {timezone_offset}'.encode('utf-8')
 
 # Handle commit message
 original_msg = commit.message.decode('utf-8').strip()
@@ -48,8 +93,6 @@ else:
 
 commit.message = new_msg.encode('utf-8')
 " --force
-
-done
 
 echo "✅ All branches have been rewritten."
 echo "📊 Total commits processed: based on existing commits in the repository"
