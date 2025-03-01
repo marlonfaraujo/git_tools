@@ -27,8 +27,13 @@ with open(config_file, 'r', encoding='utf-8') as f:
 if 'last_used_date' not in globals():
     globals()['last_used_date'] = None
 
-# Get current commit index (as string)
-commit_idx = str(commit.original_id.decode('utf-8'))
+# Get current commit index
+if 'commit_index' not in globals():
+    globals()['commit_index'] = 0
+else:
+    globals()['commit_index'] += 1
+
+commit_idx = str(globals()['commit_index'])
 
 # Fetch rule from JSON
 rule = commit_rules.get(commit_idx, {})
