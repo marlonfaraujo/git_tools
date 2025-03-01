@@ -12,7 +12,7 @@ INCREMENT_MINUTES=22
 LAST_USED_DATE=""
 
 git filter-repo --commit-callback "
-import os, json
+import os, json, time
 from datetime import datetime, timedelta
 
 config_file = os.environ.get('CONFIG_FILE', 'commit_references.json')
@@ -47,9 +47,12 @@ if not new_datetime:
         new_datetime = globals()['last_used_date'] + timedelta(hours=increment_hours, minutes=increment_minutes)
     else:
         # Look for previous commits with filled dates
-        previous_indices = sorted([int(k) for k in commit_rules.keys() if int(k) < int(commit_idx)], reverse=True)
-        for idx in previous_indices:
-            prev_rule = commit_rules.get(str(idx), {})
+        previous_indices = list(commit_rules.keys())
+        # Keeps in the natural order that comes in JSON
+        for idx in reversed(previous_indices):
+            if idx == commit_idx:
+                continue
+            prev_rule = commit_rules.get(idx, {})
             if 'date' in prev_rule and prev_rule['date']:
                 try:
                     new_datetime = datetime.strptime(prev_rule['date'], '%Y-%m-%d %H:%M:%S') + timedelta(hours=increment_hours, minutes=increment_minutes)
@@ -69,10 +72,10 @@ globals()['last_used_date'] = new_datetime
 
 # Apply new date if valid
 if isinstance(new_datetime, datetime):
-    commit_date_str = new_datetime.strftime('%Y-%m-%dT%H:%M:%S')
+    timestamp = int(new_datetime.timestamp())
     timezone_offset = '-0300'
-    commit.author_date = f'{commit_date_str} {timezone_offset}'.encode('utf-8')
-    commit.committer_date = f'{commit_date_str} {timezone_offset}'.encode('utf-8')
+    commit.author_date = f'{timestamp} {timezone_offset}'.encode('utf-8')
+    commit.committer_date = f'{timestamp} {timezone_offset}'.encode('utf-8')
 
 # Handle commit message
 original_msg = commit.message.decode('utf-8').strip()
