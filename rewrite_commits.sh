@@ -1,5 +1,15 @@
+#git remote add origin <URL>
+#git filter-repo
+#git push --set-upstream origin main --force
 #!/bin/bash
 set -e
+
+read -p "Enter repository URL: " url
+
+if [ -z "$url" ]; then
+  echo "No URL provided."
+  exit 1
+fi
 
 # File with commit customization
 CONFIG_FILE="commit_references.json"
@@ -102,5 +112,18 @@ else:
 commit.message = new_msg.encode('utf-8')
 " --force
 
+if git remote | grep -q "^origin$"; then
+  git remote remove origin
+fi
+
+git remote add origin "$url"
+
+branch=$(git branch --show-current)
+
+git push --set-upstream origin "$branch" --force
+
 echo "✅ All branches have been rewritten."
 echo "📊 Total commits processed: based on existing commits in the repository"
+
+echo "Done. Branch '$branch' is now tracking '$url'."
+
